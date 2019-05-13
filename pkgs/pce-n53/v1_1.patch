@@ -1,0 +1,588 @@
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
+index 533ea7c..61fed99 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
+@@ -189,11 +189,14 @@ CROSS_COMPILE = mips-wrs-linux-gnu-
+ endif
+ 
+ ifeq ($(PLATFORM),PC)
++ifndef KERN_VER
++KERN_VER = $(shell uname -r)
++endif
+ # Linux 2.6
+-LINUX_SRC = /lib/modules/$(shell uname -r)/build
++#LINUX_SRC = /lib/modules/$(KERN_VER)/build
+ # Linux 2.4 Change to your local setting
+ #LINUX_SRC = /usr/src/linux-2.4
+-LINUX_SRC_MODULE = /lib/modules/$(shell uname -r)/kernel/drivers/net/wireless/
++LINUX_SRC_MODULE = /lib/modules/$(KERN_VER)/kernel/drivers/net/wireless/
+ CROSS_COMPILE = 
+ endif
+ 
+@@ -410,7 +413,6 @@ ifeq ($(OSABL),YES)
+ 	cp -f $(RT28xx_DIR)/os/linux/rtnet$(MODULE)apsta.ko /tftpboot
+ endif
+ else
+-	cp -f $(RT28xx_DIR)/os/linux/rt$(MODULE)sta.ko /tftpboot
+ ifeq ($(OSABL),YES)
+ 	cp -f $(RT28xx_DIR)/os/linux/rtutil$(MODULE)sta.ko /tftpboot
+ 	cp -f $(RT28xx_DIR)/os/linux/rtnet$(MODULE)sta.ko /tftpboot
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
+index a8a04dd..c2c455d 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
+@@ -2851,8 +2851,8 @@ VOID	UserCfgInit(
+ 	pAd->bGenOneHCCA = FALSE;
+ 	pAd->CommonCfg.Dsifs = 10;      /* in units of usec */
+ 	pAd->CommonCfg.TxPower = 100; /* mW*/
+-	pAd->CommonCfg.TxPowerPercentage = 0xffffffff; /* AUTO*/
+-	pAd->CommonCfg.TxPowerDefault = 0xffffffff; /* AUTO*/
++	pAd->CommonCfg.TxPowerPercentage = 100; /* AUTO*/
++	pAd->CommonCfg.TxPowerDefault = 100; /* AUTO*/
+ 	pAd->CommonCfg.TxPreamble = Rt802_11PreambleAuto; /* use Long preamble on TX by defaut*/
+ 	pAd->CommonCfg.bUseZeroToDisableFragment = FALSE;
+ 	pAd->CommonCfg.RtsThreshold = 2347;
+@@ -3075,7 +3075,7 @@ VOID	UserCfgInit(
+ 	OPSTATUS_CLEAR_FLAG(pAd, fOP_STATUS_INFRA_ON);
+ 
+ 	/* PHY specification*/
+-	pAd->CommonCfg.PhyMode = PHY_11BG_MIXED;		/* default PHY mode*/
++	pAd->CommonCfg.PhyMode = PHY_11ABGN_MIXED;		/* default PHY mode*/
+ 	OPSTATUS_CLEAR_FLAG(pAd, fOP_STATUS_SHORT_PREAMBLE_INUSED);  /* CCK use LONG preamble*/
+ 
+ #ifdef CONFIG_STA_SUPPORT
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
+index 3f97589..ed501e4 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
+@@ -330,7 +330,6 @@ int rt28xx_init(
+ 	/* Read parameters from Config File */
+ 	/* unknown, it will be updated in NICReadEEPROMParameters */
+ 	pAd->RfIcType = RFIC_UNKNOWN;
+-	Status = RTMPReadParametersHook(pAd);
+ 
+ #ifdef CONFIG_STA_SUPPORT
+ #ifdef CREDENTIAL_STORE
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
+index 3c1410a..535db52 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
+@@ -441,7 +441,7 @@ INT RtmpAsicSendCommandToMcu(
+ 
+ #ifdef CONFIG_STA_SUPPORT
+ #ifdef PCIE_PS_SUPPORT
+-	ULONG	Configuration;
++	u16	Configuration;
+ 	ULONG	offset;
+ #endif /* PCIE_PS_SUPPORT */
+ #endif /* CONFIG_STA_SUPPORT */
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
+index 8fe2b16..8662989 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
+@@ -278,8 +278,13 @@ typedef struct file* RTMP_OS_FD;
+ 
+ typedef struct _OS_FS_INFO_
+ {
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,5,0)
+ 	int				fsuid;
+ 	int				fsgid;
++#else
++	kuid_t				fsuid;
++	kgid_t				fsgid;
++#endif
+ 	mm_segment_t	fs;
+ } OS_FS_INFO;
+ 
+@@ -526,7 +531,7 @@ typedef struct tasklet_struct  *POS_NET_TASK_STRUCT;
+ typedef struct timer_list	OS_NDIS_MINIPORT_TIMER;
+ typedef struct timer_list	OS_TIMER;
+ 
+-typedef void (*TIMER_FUNCTION)(unsigned long);
++typedef void (*TIMER_FUNCTION)(struct timer_list *);
+ 
+ 
+ #define OS_WAIT(_time) \
+@@ -996,15 +1001,15 @@ void linux_pci_unmap_single(void *handle, ra_dma_addr_t dma_addr, size_t size, i
+ 		(RTPKT_TO_OSPKT(_pkt)->len) = (_len)
+ 		
+ #define GET_OS_PKT_DATATAIL(_pkt) \
+-		(RTPKT_TO_OSPKT(_pkt)->tail)
++		((unsigned char*)skb_tail_pointer(RTPKT_TO_OSPKT(_pkt)))
+ #define SET_OS_PKT_DATATAIL(_pkt, _start, _len)	\
+-		((RTPKT_TO_OSPKT(_pkt))->tail) = (PUCHAR)((_start) + (_len))
++		(skb_set_tail_pointer((RTPKT_TO_OSPKT(_pkt)), (_len)))
+ 		
+ #define GET_OS_PKT_HEAD(_pkt) \
+ 		(RTPKT_TO_OSPKT(_pkt)->head)
+ 
+ #define GET_OS_PKT_END(_pkt) \
+-		(RTPKT_TO_OSPKT(_pkt)->end)
++		((unsigned char*)skb_end_pointer(RTPKT_TO_OSPKT(_pkt)))
+ 
+ #define GET_OS_PKT_NETDEV(_pkt) \
+ 		(RTPKT_TO_OSPKT(_pkt)->dev)
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
+index ba41f33..533f36c 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
+@@ -31,7 +31,7 @@
+ #include "rtmp_os.h"
+ 
+ #define DECLARE_TIMER_FUNCTION(_func)			\
+-	void rtmp_timer_##_func(unsigned long data)
++	void rtmp_timer_##_func(struct timer_list *)
+ 
+ #define GET_TIMER_FUNCTION(_func)				\
+ 	(PVOID)rtmp_timer_##_func
+@@ -52,6 +52,7 @@ typedef VOID(
+ 
+ typedef struct _RALINK_TIMER_STRUCT {
+ 	RTMP_OS_TIMER TimerObj;	/* Ndis Timer object */
++	PVOID Reserved;
+ 	BOOLEAN Valid;		/* Set to True when call RTMPInitTimer */
+ 	BOOLEAN State;		/* True if timer cancelled */
+ 	BOOLEAN PeriodicType;	/* True if timer is periodic timer */
+@@ -81,11 +82,13 @@ typedef struct _RTMP_TIMER_TASK_QUEUE_ {
+ } RTMP_TIMER_TASK_QUEUE;
+ 
+ #define BUILD_TIMER_FUNCTION(_func)										\
+-void rtmp_timer_##_func(unsigned long data)										\
++void rtmp_timer_##_func(struct timer_list *tm)										\
+ {																			\
+-	PRALINK_TIMER_STRUCT	_pTimer = (PRALINK_TIMER_STRUCT)data;				\
++	PRALINK_TIMER_STRUCT	_pTimer;				\
+ 	RTMP_TIMER_TASK_ENTRY	*_pQNode;										\
+ 	RTMP_ADAPTER			*_pAd;											\
++
++	memcpy(&_pTimer, tm + 1, sizeof(PVOID)); \
+ 																			\
+ 	_pTimer->handle = _func;													\
+ 	_pAd = (RTMP_ADAPTER *)_pTimer->pAd;										\
+@@ -95,10 +98,11 @@ void rtmp_timer_##_func(unsigned long data)										\
+ }
+ #else /* !RTMP_TIMER_TASK_SUPPORT */
+ #define BUILD_TIMER_FUNCTION(_func)										\
+-void rtmp_timer_##_func(unsigned long data)										\
++void rtmp_timer_##_func(struct timer_list *tm)										\
+ {																			\
+-	PRALINK_TIMER_STRUCT	pTimer = (PRALINK_TIMER_STRUCT) data;				\
++	PRALINK_TIMER_STRUCT	pTimer;				\
+ 																			\
++	memcpy(&pTimer, tm + 1, sizeof(PVOID)); \
+ 	_func(NULL, (PVOID) pTimer->cookie, NULL, pTimer); 							\
+ 	if (pTimer->Repeat)														\
+ 		RTMP_OS_Add_Timer(&pTimer->TimerObj, pTimer->TimerValue);			\
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4 Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
+index 2db303c..8ba230d 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
+@@ -9,6 +9,9 @@ DAT_FILE_NAME = RT$(MODULE_DAT)STA.dat
+ endif
+ #endif // CONFIG_STA_SUPPORT //
+ 
++ifndef KERN_VER
++KERN_VER = $(shell uname -r)
++endif
+ 
+ 
+ OBJ := $(MOD_NAME).o
+@@ -274,18 +277,13 @@ endif
+ endif
+ 
+ install:
+-	rm -rf $(DAT_PATH)
+-	$(shell [ ! -f /etc/Wireless ] && mkdir /etc/Wireless)
+-	mkdir $(DAT_PATH)
+-	cp $(RT28xx_DIR)/$(DAT_FILE_NAME) $(DAT_PATH)/.
+ 	install -d $(LINUX_SRC_MODULE)
+ 	install -m 644 -c $(addsuffix .o,$(MOD_NAME)) $(LINUX_SRC_MODULE)
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+ 
+ uninstall:
+-#	rm -rf $(DAT_PATH)
+ 	rm -rf $(addprefix $(LINUX_SRC_MODULE),$(addsuffix .o,$(MOD_NAME)))
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+ 
+ # Declare the contents of the .PHONY variable as phony.  We keep that
+ # information in a variable so we can use it in if_changed and friends.
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
+index c8cc93c..c35e5cc 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
+@@ -8,6 +8,10 @@ endif
+ #endif // CONFIG_STA_SUPPORT //
+ 
+ 
++ifndef KERN_VER
++KERN_VER = $(shell uname -r)
++endif
++
+ OBJ := $(MOD_NAME).o
+ 
+ 
+@@ -94,11 +98,11 @@ endif
+ install:
+ 	install -d $(LINUX_SRC_MODULE)
+ 	install -m 644 -c $(addsuffix .o,$(MOD_NAME)) $(LINUX_SRC_MODULE)
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+ 
+ uninstall:
+ 	rm -rf $(addprefix $(LINUX_SRC_MODULE),$(addsuffix .o,$(MOD_NAME)))
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+ 
+ # Declare the contents of the .PHONY variable as phony.  We keep that
+ # # information in a variable so we can use it in if_changed and friends.
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
+index 69e401c..77904e0 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
+@@ -7,6 +7,9 @@ MOD_NAME = rtutil$(MODULE)sta
+ endif
+ #endif // CONFIG_STA_SUPPORT //
+ 
++ifndef KERN_VER
++KERN_VER = $(shell uname -r)
++endif
+ 
+ OBJ := $(MOD_NAME).o
+ 
+@@ -65,11 +68,11 @@ endif
+ install:
+ 	install -d $(LINUX_SRC_MODULE)
+ 	install -m 644 -c $(addsuffix .o,$(MOD_NAME)) $(LINUX_SRC_MODULE)
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+ 
+ uninstall:
+ 	rm -rf $(addprefix $(LINUX_SRC_MODULE),$(addsuffix .o,$(MOD_NAME)))
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+ 
+ # Declare the contents of the .PHONY variable as phony.  We keep that
+ # # information in a variable so we can use it in if_changed and friends.
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6 Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
+index 28c5530..1f1bf71 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
+@@ -9,6 +9,9 @@ DAT_FILE_NAME = RT$(CHIPSET_DAT)STA.dat
+ endif
+ #endif // CONFIG_STA_SUPPORT //
+ 
++ifndef KERN_VER
++KERN_VER = $(shell uname -r)
++endif
+ 
+ obj-m := $(MOD_NAME).o
+ 
+@@ -291,18 +294,13 @@ endif
+ endif
+ 
+ install:
+-	rm -rf $(DAT_PATH)
+-	$(shell [ ! -f /etc/Wireless ] && mkdir /etc/Wireless)
+-	mkdir $(DAT_PATH)
+-	cp $(RT28xx_DIR)/$(DAT_FILE_NAME) $(DAT_PATH)/.
+ 	install -d $(LINUX_SRC_MODULE)
+ 	install -m 644 -c $(addsuffix .ko,$(MOD_NAME)) $(LINUX_SRC_MODULE)
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+ 
+ uninstall:
+-#	rm -rf $(DAT_PATH)
+ 	rm -rf $(addprefix $(LINUX_SRC_MODULE),$(addsuffix .ko,$(MOD_NAME)))
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+ 
+ # Declare the contents of the .PHONY variable as phony.  We keep that
+ # information in a variable so we can use it in if_changed and friends.
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
+index 968165d..1a92a39 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
+@@ -7,6 +7,9 @@ MOD_NAME = rtnet$(MODULE)sta
+ endif
+ #endif // CONFIG_STA_SUPPORT //
+ 
++ifndef KERN_VER
++KERN_VER = $(shell uname -r)
++endif
+ 
+ obj-m := $(MOD_NAME).o
+ 
+@@ -90,8 +93,8 @@ endif
+ install:
+ 	install -d $(LINUX_SRC_MODULE)
+ 	install -m 644 -c $(addsuffix .ko,$(MOD_NAME)) $(LINUX_SRC_MODULE)
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+ 
+ uninstall:
+ 	rm -rf $(addprefix $(LINUX_SRC_MODULE),$(addsuffix .ko,$(MOD_NAME)))
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
+index 7510db6..e43fe5f 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
+@@ -7,6 +7,9 @@ MOD_NAME = rtutil$(MODULE)sta
+ endif
+ #endif // CONFIG_STA_SUPPORT //
+ 
++ifndef KERN_VER
++KERN_VER = $(shell uname -r)
++endif
+ 
+ obj-m := $(MOD_NAME).o
+ 
+@@ -50,8 +53,8 @@ endif
+ install:
+ 	install -d $(LINUX_SRC_MODULE)
+ 	install -m 644 -c $(addsuffix .ko,$(MOD_NAME)) $(LINUX_SRC_MODULE)
+-	/sbin/depmod -a ${shell uname -r}
++	/sbin/depmod -a ${KERN_VER}
+ 
+ uninstall:
+ 	rm -rf $(addprefix $(LINUX_SRC_MODULE),$(addsuffix .ko,$(MOD_NAME)))
+-	/sbin/depmod -a ${shell uname -r}
+\ No newline at end of file
++	/sbin/depmod -a ${KERN_VER}
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
+index ebd3e57..0674e6a 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
+@@ -32,6 +32,7 @@
+ #include "rt_os_util.h"
+ #include "rt_os_net.h"
+ #include <linux/pci.h>
++#include <linux/module.h>
+ 
+ /* */
+ /* Function declarations */
+@@ -39,8 +40,14 @@
+ /*extern int rt28xx_close(IN struct net_device *net_dev); */
+ /*extern int rt28xx_open(struct net_device *net_dev); */
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
++static VOID rt2860_remove_one(struct pci_dev *pci_dev);
++static INT rt2860_probe(struct pci_dev *pci_dev, const struct pci_device_id  *ent);
++#else
+ static VOID __devexit rt2860_remove_one(struct pci_dev *pci_dev);
+ static INT __devinit rt2860_probe(struct pci_dev *pci_dev, const struct pci_device_id  *ent);
++#endif
++
+ static void __exit rt2860_cleanup_module(void);
+ static int __init rt2860_init_module(void);
+ 
+@@ -59,7 +66,11 @@ static int rt2860_resume(struct pci_dev *pci_dev);
+ /* */
+ /* Ralink PCI device table, include all supported chipsets */
+ /* */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
++static struct pci_device_id rt2860_pci_tbl[] =
++#else
+ static struct pci_device_id rt2860_pci_tbl[] __devinitdata =
++#endif
+ {
+ #ifdef RT5592
+ 	{PCI_DEVICE(NIC_PCI_VENDOR_ID, NIC5592_PCIe_DEVICE_ID)},
+@@ -70,6 +81,7 @@ static struct pci_device_id rt2860_pci_tbl[] __devinitdata =
+     {0,}		/* terminate list */
+ };
+ 
++MODULE_LICENSE("GPL");
+ MODULE_DEVICE_TABLE(pci, rt2860_pci_tbl);
+ #ifdef CONFIG_STA_SUPPORT
+ #ifdef MODULE_VERSION
+@@ -86,11 +98,13 @@ static struct pci_driver rt2860_driver =
+     name:       RTMP_DRV_NAME,
+     id_table:   rt2860_pci_tbl,
+     probe:      rt2860_probe,
+-#if LINUX_VERSION_CODE >= 0x20412
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,8,0) /* 3.8 check */
++#if LINUX_VERSION_CODE >= 0x20412 
+     remove:     __devexit_p(rt2860_remove_one),
+ #else
+     remove:     __devexit(rt2860_remove_one),
+ #endif
++#endif /* 3.8 check */
+ 
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,0)
+ #ifdef CONFIG_PM
+@@ -291,7 +305,11 @@ module_exit(rt2860_cleanup_module);
+ /* */
+ /* PCI device probe & initialization function */
+ /* */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
++static INT  rt2860_probe(
++#else 
+ static INT __devinit   rt2860_probe(
++#endif
+     IN  struct pci_dev              *pci_dev, 
+     IN  const struct pci_device_id  *pci_id)
+ {
+@@ -461,8 +479,11 @@ err_out:
+ 	return -ENODEV; /* probe fail */
+ }
+ 
+-
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
++static VOID rt2860_remove_one(
++#else
+ static VOID __devexit rt2860_remove_one(
++#endif
+     IN  struct pci_dev  *pci_dev)
+ {
+ 	PNET_DEV	net_dev = pci_get_drvdata(pci_dev);
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
+index e7c8084..dc0037d 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
+@@ -119,9 +119,11 @@ static inline VOID __RTMP_OS_Init_Timer(
+ 	IN PVOID data)
+ {
+ 	if (!timer_pending(pTimer)) {
+-		init_timer(pTimer);
+-		pTimer->data = (unsigned long)data;
++		static struct lock_class_key key;
++
++		init_timer_key(pTimer, function, 0, "NULL", &key);
+ 		pTimer->function = function;
++		memcpy(pTimer + 1, &data, sizeof(PVOID));
+ 	}
+ }
+ 
+@@ -502,9 +504,10 @@ PNDIS_PACKET duplicate_pkt(
+ 		MEM_DBG_PKT_ALLOC_INC(skb);
+ 
+ 		skb_reserve(skb, 2);
+-		NdisMoveMemory(skb->tail, pHeader802_3, HdrLen);
++		NdisMoveMemory((unsigned char*)skb_tail_pointer(skb),
++			pHeader802_3, HdrLen);
+ 		skb_put(skb, HdrLen);
+-		NdisMoveMemory(skb->tail, pData, DataSize);
++		NdisMoveMemory((unsigned char*)skb_tail_pointer(skb), pData, DataSize);
+ 		skb_put(skb, DataSize);
+ 		skb->dev = pNetDev;	/*get_netdev_from_bssid(pAd, FromWhichBSSID); */
+ 		pPacket = OSPKT_TO_RTPKT(skb);
+@@ -656,7 +659,7 @@ PNDIS_PACKET ClonePacket(
+ 		pClonedPkt->dev = pRxPkt->dev;
+ 		pClonedPkt->data = pData;
+ 		pClonedPkt->len = DataSize;
+-		pClonedPkt->tail = pClonedPkt->data + pClonedPkt->len;
++		skb_set_tail_pointer(pClonedPkt, DataSize);
+ 		ASSERT(DataSize < 1530);
+ 	}
+ 	return pClonedPkt;
+@@ -702,7 +705,7 @@ void wlan_802_11_to_802_3_packet(
+ 	pOSPkt->dev = pNetDev;
+ 	pOSPkt->data = pData;
+ 	pOSPkt->len = DataSize;
+-	pOSPkt->tail = pOSPkt->data + pOSPkt->len;
++	skb_set_tail_pointer(pOSPkt, DataSize);
+ 
+ 	/* */
+ 	/* copy 802.3 header */
+@@ -1103,12 +1106,7 @@ void RtmpOSFileSeek(RTMP_OS_FD osfd,
+ int RtmpOSFileRead(RTMP_OS_FD osfd,
+ 		     char *pDataPtr, int readLen) {
+ 	/* The object must have a read method */
+-	if (osfd->f_op && osfd->f_op->read) {
+-		return osfd->f_op->read(osfd, pDataPtr, readLen, &osfd->f_pos);
+-	} else {
+-		DBGPRINT(RT_DEBUG_ERROR, ("no file read method\n"));
+-		return -1;
+-	}
++	return kernel_read(osfd, &osfd->f_pos, pDataPtr, readLen);
+ }
+ 
+ int RtmpOSFileWrite(RTMP_OS_FD osfd,
+@@ -1134,9 +1132,7 @@ static inline void __RtmpOSFSInfoChange(OS_FS_INFO * pOSFSInfo,
+ 		pOSFSInfo->fsgid = current_fsgid();
+ #endif
+ 		pOSFSInfo->fs = get_fs();
+-		set_fs(KERNEL_DS);
+ 	} else {
+-		set_fs(pOSFSInfo->fs);
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
+ 		current->fsuid = pOSFSInfo->fsuid;
+ 		current->fsgid = pOSFSInfo->fsgid;
+@@ -3594,7 +3590,7 @@ VOID RTMP_OS_Init_Timer(IN VOID *pReserved,
+ 	OS_NDIS_MINIPORT_TIMER *pTimer;
+ 
+ 	if (RTMP_OS_Alloc_RscOnly(pTimerOrg,
+-			      sizeof (OS_NDIS_MINIPORT_TIMER)) == FALSE) {
++			      sizeof (OS_NDIS_MINIPORT_TIMER) + sizeof(PVOID)) == FALSE) {
+ 		return;		/* allocate fail */
+ 	}
+ 
+@@ -4933,7 +4929,7 @@ Note:
+ */
+ VOID RtmpOsPktTailAdjust(IN PNDIS_PACKET pNetPkt,
+ 			 IN UINT removedTagLen) {
+-	OS_PKT_TAIL_ADJUST(pNetPkt, removedTagLen);
++	skb_set_tail_pointer(pNetPkt, pNetPkt->len - removedTagLen)
+ }
+ 
+ /*
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
+index df434f9..9568947 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
+@@ -268,8 +268,9 @@ int rt_ioctl_giwmode(struct net_device *dev,
+ /*    if(!RTMP_TEST_FLAG(pAd, fRTMP_ADAPTER_INTERRUPT_IN_USE)) */
+ 	if (RTMP_DRIVER_IOCTL_SANITY_CHECK(pAd, NULL) != NDIS_STATUS_SUCCESS)
+     {
+-        DBGPRINT(RT_DEBUG_TRACE, ("INFO::Network is down!\n"));
+-        return -ENETDOWN;   
++        DBGPRINT(RT_DEBUG_TRACE, ("Network down, using mode=IW_MODE_INFRA\n"));
++        *mode = IW_MODE_INFRA;
++        return 0;
+     }
+ 
+ 
+@@ -694,7 +695,7 @@ int rt_ioctl_iwaplist(struct net_device *dev,
+ 		set_quality(pAd, &qual[i], pList); /*&pAd->ScanTab.BssEntry[i]); */
+ 	}
+ 	data->length = i;
+-	memcpy(extra, &addr, i*sizeof(addr[0]));
++	__builtin_memcpy(extra, &addr, i*sizeof(addr[0]));
+ 	data->flags = 1;		/* signal quality present (sort of) */
+ 	memcpy(extra + i*sizeof(addr[0]), &qual, i*sizeof(qual[i]));
+ 
+@@ -2411,8 +2412,7 @@ INT rt28xx_sta_ioctl(
+ 
+ 		if (cmd != RTPRIV_IOCTL_SET)
+ 		{
+-            DBGPRINT(RT_DEBUG_TRACE, ("INFO::Network is down!\n"));
+-		    return -ENETDOWN;  
++            DBGPRINT(RT_DEBUG_TRACE, ("IOCTL_GET while network down\n"));
+         }
+     }
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
+index 6e66010..67bd0ba 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
++++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
+@@ -4893,7 +4893,7 @@ VOID RTMPIoctlShow(
+             wrq->u.data.length = strlen(extra) + 1; /* 1: size of '\0' */
+             break;
+         case SHOW_DRVIER_VERION:
+-            snprintf(extra, size, "Driver version-%s, %s %s\n", STA_DRIVER_VERSION, __DATE__, __TIME__ );
++            snprintf(extra, size, "Driver version-%s, \n", STA_DRIVER_VERSION);
+             wrq->u.data.length = strlen(extra) + 1; /* 1: size of '\0' */
+             break;
+ #ifdef DOT11_N_SUPPORT
+@@ -7350,7 +7350,7 @@ INT RTMP_STA_IoctlHandle(
+ 
+ 		case CMD_RTPRIV_IOCTL_STA_SCAN_END:
+ 		    pAd->StaCfg.bSkipAutoScanConn = FALSE;
+-			DBGPRINT(RT_DEBUG_ERROR ,("===>rt_ioctl_giwscan. %d(%d) BSS returned, data->length = %ld\n",pAd->ScanTab.BssNr , pAd->ScanTab.BssNr, Data));
++			DBGPRINT(RT_DEBUG_INFO ,("===>rt_ioctl_giwscan. %d(%d) BSS returned, data->length = %ld\n",pAd->ScanTab.BssNr , pAd->ScanTab.BssNr, Data));
+ 			break;
+ 
+ 		case CMD_RTPRIV_IOCTL_BSS_LIST_GET:
