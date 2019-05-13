@@ -1,7 +1,13 @@
-{ stdenv, fetchurl, unzip, kernel }:
+{ stdenv, fetchurl, fetchFromGitHub, unzip, kernel }:
 
 let
   modDestDir = "$out/lib/modules/${kernel.modDirVersion}/kernel/drivers/net/wireless"; 
+  pkg_repo = fetchFromGitHub {
+    repo = "nix-pkgs";
+    owner = "simplejack-src";
+    rev = "v1.1";
+    sha256 = "00eb1c4fc5ae8851c079b9c860d2eac9a7db1377bd7e03f253459db435d5d2a3";
+  };
 in stdenv.mkDerivation {
   name = "pce-n53-${kernel.version}";
   version = "1.1";
@@ -19,14 +25,7 @@ in stdenv.mkDerivation {
   '';
 
   # Patch source so resultant module runs on recent kernels
-  patch_dir = fetchFromGitHub {
-    owner = "simplejack-src";
-    repo = "nix-pkgs";
-    rev = "v1.1";
-    sha256 = "00";
-  };
-
-  patches = [ "${patch_dir}/pkgs/pce-n53/v1_1.patch" ];
+  patches = [ "${pkg_repo}/pkgs/pce-n53/fix.patch" ];
 
   # Disable troublesome features
   hardeningDisable = [ "format" "fortify" "stackprotector" "pic" ];
