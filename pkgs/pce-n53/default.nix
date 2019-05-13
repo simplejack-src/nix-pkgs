@@ -6,7 +6,7 @@ let
     repo = "nix-pkgs";
     owner = "simplejack-src";
     rev = "v1.1";
-    sha256 = "00eb1c4fc5ae8851c079b9c860d2eac9a7db1377bd7e03f253459db435d5d2a3";
+    sha256 = "1js548w27chis3ixzhkx8y78wp5g738jabahsjzwpshyra5ww5hm";
   };
 in stdenv.mkDerivation {
   name = "pce-n53-${kernel.version}";
