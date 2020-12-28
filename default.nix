@@ -1,10 +1,10 @@
-{ system ? builtins.currentSystem }:
+{ system ? builtins.currentSystem,
+  pkgs ? import <nixpkgs> { inherit system; },
+  kernelPackages ? pkgs.linuxPackages }:
 let
-  pkgs = import <nixpkgs> { inherit system; };
-
-  callPackage = pkgs.lib.callPackageWith (pkgs // pkgs.linuxPackages // self);
+  callPackage = pkgs.lib.callPackageWith (pkgs // kernelPackages // self);
 
   self = {
-    pce-n53 = callPackage ./pkgs/pce-n53 { };
+    pce-n53 = callPackage ./pkgs/pce-n53 {};
   };
 in self
