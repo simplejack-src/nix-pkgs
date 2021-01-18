@@ -6,15 +6,15 @@ Nix Channel
 ===========
 Note: Below (including Install) should be done with root permissions if Nix store is only root accessible or if using NixOS declarative configuration.
 ```
-nix-channel --add https://github.com/simplejack-src/nix-pkgs/archive/v1.1.tar.gz simplejack-src-pkgs
+nix-channel --add https://github.com/simplejack-src/nix-pkgs/archive/master.tar.gz simplejack-src-pkgs
 nix-channel --update simplejack-src-pkgs
 ```
 
 Manual Build
 ============
 ```
-# wget -O - https://github.com/simplejack-src/nix-pkgs/archive/v1.1.tar.gz | tar xz
-# nix-build -A pce-n53 ./nix-pkgs-1.1/default.nix
+# wget -O - https://github.com/simplejack-src/nix-pkgs/archive/master.tar.gz | tar xz
+# nix-build -A pce-n53 ./nix-pkgs-master/default.nix
 ```
 
 Install

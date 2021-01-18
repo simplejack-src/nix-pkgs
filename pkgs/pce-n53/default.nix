@@ -10,7 +10,7 @@ let
   };
 in stdenv.mkDerivation {
   name = "pce-n53-${kernel.version}";
-  version = "1.2";
+  version = "1.3";
 
   nativeBuildInputs = [ unzip kernel.moduleBuildDependencies ];
 
