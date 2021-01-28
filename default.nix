@@ -6,5 +6,6 @@ let
 
   self = {
     pce-n53 = callPackage ./pkgs/pce-n53 {};
+    geany-plugins = callPackage ./pkgs/geany-plugins {};
   };
 in self
