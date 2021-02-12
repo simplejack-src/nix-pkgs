@@ -5,12 +5,12 @@ let
   pkg_repo = fetchFromGitHub {
     repo = "pce-n53";
     owner = "simplejack-src";
-    rev = "v1.1";
-    sha256 = "0z7kc52v2b09p0zz3n24c91jdbfg0gcw31nnq2dxwkz8280rg7xy";
+    rev = "v1.2";
+    sha256 = "1ghnjmbhf09gvrkhs40iqplyi6sq3s05pfgkyah9p40v9n74s3ns";
   };
 in stdenv.mkDerivation {
   name = "pce-n53-${kernel.version}";
-  version = "1.3";
+  version = "1.4";
 
   nativeBuildInputs = [ unzip kernel.moduleBuildDependencies ];
 
